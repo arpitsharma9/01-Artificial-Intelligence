@@ -1,40 +1,41 @@
 import pandas as pd
 import numpy as np
 
-def get_most_volatile(prices):
-    """Return the ticker symbol for the most volatile stock.
+def estimate_volatility(prices, l):
+    """Create an exponential moving average model of the volatility of a stock
+    price, and return the most recent (last) volatility estimate.
     
     Parameters
     ----------
-    prices : pandas.DataFrame
-        a pandas.DataFrame object with columns: ['ticker', 'date', 'price']
-    
+    prices : pandas.Series
+        A series of adjusted closing prices for a stock.
+        
+    l : float
+        The 'lambda' parameter of the exponential moving average model. Making
+        this value smaller will cause the model to weight older terms less 
+        relative to more recent terms.
+        
     Returns
     -------
-    ticker : string
-        ticker symbol for the most volatile stock
-    """
-    # TODO: Fill in this function.
-    tick = prices.groupby('ticker')
-    print(type(tick.groups),tick.groups.keys())
-    #for name,group in tick:
-     #   print (name)
-      #  print (group)
- 
-    vol = {}
- 
-    for index in tick.groups.keys():
- 
-        vol[index] = np.std(np.log(tick.get_group(index)['price']) -np.log(tick.get_group(index)['price']).shift(1))
-        print (vol[index])
-    return max(vol)
-
-
-def test_run(filename='08-volatility_data.csv'):
-    """Test run get_most_volatile() with stock prices from a file."""
-    prices = pd.read_csv(filename, parse_dates=['date'])
+    last_vol : float
+        The last element of your exponential moving averge volatility model series.
     
-    print("Most volatile stock: {}".format(get_most_volatile(prices)))
+    """
+    # TODO: Implement the exponential moving average volatility model and return the last value.
+    lret = np.log(prices) - np.log(prices.shift(1))
+    #print(lret)
+    lret_2 = lret**2
+    #lret_ewma = lret.ewm(alpha= 1-l).mean()
+    volatility = np.sqrt(lret_2.ewm(alpha= 1-l).mean() ) 
+    #- lret_ewma**2
+    last_vol = volatility[-1]
+    print(last_vol)
+    return last_vol
+def test_run(filename='data.csv'):
+    """Test run get_most_volatile() with stock prices from a file."""
+    prices = pd.read_csv(filename, parse_dates=['date'], index_col='date', squeeze=True)
+    #print(type(prices),prices)
+    print("Most recent volatility estimate: {:.6f}".format(estimate_volatility(prices, 0.7)))
 
 
 if __name__ == '__main__':
